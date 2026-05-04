@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SPA with External API</title>
+    <script src="https://cdn.jsdelivr.net/npm/keycloak-js@24.0.0/dist/keycloak.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        textarea, pre { width: 100%; background: #f4f4f4; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<h2>SPA Frontend (Public Client)</h2>
+
+<button id="loginBtn" onclick="keycloak.login()">1. Login</button>
+<button id="getDataBtn" onclick="fetchData()" style="display:none; background: #cce5ff;">2. Get Secret Data from API</button>
+<button id="logoutBtn" onclick="keycloak.logout()" style="display:none; background: #f8d7da;">3. Logout</button>
+
+<h3 style="color: red;">Access Token (Недолік: Він лежить прямо в браузері!):</h3>
+<textarea id="tokenDisplay" rows="6" readonly placeholder="Тут з'явиться токен після логіну..."></textarea>
+
+<h3>Відповідь від нашого Spring Boot (External API):</h3>
+<pre id="apiResponse">Даних поки немає...</pre>
+
+<script>
+    // 1. Налаштовуємо підключення до Keycloak
+    const keycloak = new Keycloak({
+        url: 'http://localhost:8081',
+        realm: 'spa-realm',
+        clientId: 'spa-client'
+    });
+
+    // 2. Ініціалізуємо Keycloak.
+    // ЗВЕРНИ УВАГУ: Ми вмикаємо PKCE ('S256').
+    // Бібліотека сама згенерує Code Verifier та Challenge, нам не треба писати це руками!
+    keycloak.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256'
+    }).then(function(authenticated) {
+        if (authenticated) {
+            // Якщо логін успішний - ховаємо кнопку входу, показуємо інші
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            document.getElementById('getDataBtn').style.display = 'inline-block';
+
+            // ВИВОДИМО ТОКЕН НА ЕКРАН (Ось чому XSS страшний для SPA)
+            document.getElementById('tokenDisplay').value = keycloak.token;
+        }
+    }).catch(function() {
+        alert('Помилка ініціалізації Keycloak');
+    });
+
+    // 3. Робимо запит на наш бекенд
+    function fetchData() {
+        fetch('http://localhost:8080/api/user', {
+            method: 'GET',
+            headers: {
+                // КРИТИЧНО: Ми самі беремо токен і кладемо його в заголовок Authorization
+                'Authorization': 'Bearer ' + keycloak.token
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Помилка доступу (Status: " + response.status + ")");
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('apiResponse').innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('apiResponse').innerText = error.message + "\nМожливо, проблема з CORS або токеном.";
+            });
+    }
+</script>
+</body>
+</html>

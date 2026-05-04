@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Звідки завантажити публічні ключі для перевірки підпису токена
+          issuer-uri: http://localhost:8081/realms/spa-realm
