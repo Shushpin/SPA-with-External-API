@@ -75,3 +75,4 @@ This repository contains two main components:
 4. **Test the Flow:** - Click **Login** and authenticate.
     - Observe the Access Token generated on the screen.
     - Click **Get Secret Data** to perform an authenticated CORS request to the Spring Boot backend.
+- - Upd. (I am using docker. Run the command from the previous patterns[(BFF: Pattern 1)](https://github.com/Shushpin/SPA-with-intermediary-API-BFF.git) to bring up the container with Keylock on the desired port.)
