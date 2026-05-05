@@ -6,5 +6,5 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Звідки завантажити публічні ключі для перевірки підпису токена
-          issuer-uri: http://localhost:8081/realms/spa-realm
+          # Використовуємо змінну оточення з дефолтним значенням
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/spa-realm}
